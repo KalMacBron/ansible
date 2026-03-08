@@ -1,0 +1,60 @@
+---
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  become: true
+
+- name: Allow OpenSSH
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    comment: OpenSSH
+  become: true
+
+- name: Allow HTTP
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+    comment: HTTP
+  become: true
+
+- name: Allow Docker Swarm management
+  community.general.ufw:
+    rule: allow
+    port: "2377"
+    proto: tcp
+    comment: Docker Swarm management
+  become: true
+
+- name: Allow Docker Swarm node discovery TCP
+  community.general.ufw:
+    rule: allow
+    port: "7946"
+    proto: tcp
+    comment: Docker Swarm node discovery
+  become: true
+
+- name: Allow Docker Swarm node discovery UDP
+  community.general.ufw:
+    rule: allow
+    port: "7946"
+    proto: udp
+    comment: Docker Swarm node discovery
+  become: true
+
+- name: Allow Docker Swarm overlay network
+  community.general.ufw:
+    rule: allow
+    port: "4789"
+    proto: udp
+    comment: Docker Swarm overlay network
+  become: true
+
+- name: Ensure UFW is enabled
+  community.general.ufw:
+    state: enabled
+  become: true
