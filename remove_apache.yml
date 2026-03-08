@@ -1,6 +1,6 @@
 ---
 
-- hosts: infra
+- hosts: kraken
   become: true
   tasks:
 
