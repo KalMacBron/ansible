@@ -1,0 +1,8 @@
+---
+- name: Install Docker on Kraken Lab nodes
+  hosts: kraken
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
