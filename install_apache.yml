@@ -1,0 +1,19 @@
+---
+
+- hosts: infra
+  become: true
+  tasks:
+
+  - name: update repository index
+    apt:
+      update_cache: yes
+
+  - name: Install the apache2 package
+    apt:
+      name: apache2
+      state: latest
+
+  - name: install PHP support for apache
+    apt: 
+      name: libapache2-mod-php
+      state: latest
