@@ -1,0 +1,14 @@
+---
+
+- hosts: kraken
+  become: true
+  tasks:
+
+  - name: remove the apache2 and php package
+    package:
+      name:
+        - "{{ apache_package }}"
+        - "{{ php_package }}"
+      state: absent
+      update_cache: yes
+

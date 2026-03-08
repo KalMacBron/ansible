@@ -1,0 +1,26 @@
+---
+
+- hosts: kraken
+  become: true
+  tasks:
+
+  - name: Install the apache and PHP support package
+    package:
+      name: 
+        - "{{ apache_package }}"
+        - "{{ php_package }}"
+      state: latest
+      update_cache: yes
+
+  - name: Ensure apache2 is running
+    service:
+      name: apache2
+      state: started
+      enabled: yes
+
+  - name: Allow HTTP through UFW
+    ufw:
+      rule: allow
+      port: "80"
+      proto: tcp
+    when: ansible_facts["distribution"] == "Ubuntu"

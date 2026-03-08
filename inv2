@@ -1,0 +1,18 @@
+[pis]
+pihole            ansible_host=192.168.0.2 apache_package=apache2 php_package=libapache2-mod-php
+KrakenMasterNode  ansible_host=192.168.0.200 apache_package=apache2 php_package=libapache2-mod-php
+KrakenWorker1     ansible_host=192.168.0.201 apache_package=apache2 php_package=libapache2-mod-php
+KrakenWorker2     ansible_host=192.168.0.202 apache_package=apache2 php_package=libapache2-mod-php
+KrakenWorker3     ansible_host=192.168.0.203 apache_package=apache2 php_package=libapache2-mod-php
+
+[kraken]
+KrakenMasterNode
+KrakenWorker1
+KrakenWorker2
+KrakenWorker3
+
+[infra]
+pihole
+
+
+
