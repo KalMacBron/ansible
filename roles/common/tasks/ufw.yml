@@ -1,0 +1,40 @@
+---
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: Ensure UFW default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Ensure UFW default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow required TCP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ ufw_allowed_tcp_ports }}"
+
+- name: Allow required UDP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  loop: "{{ ufw_allowed_udp_ports }}"
+
+- name: Allow Kubernetes cluster CIDR ranges
+  community.general.ufw:
+    rule: allow
+    src: "{{ item }}"
+  loop: "{{ ufw_allowed_networks }}"
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled

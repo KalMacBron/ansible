@@ -1,0 +1,9 @@
+---
+- name: Install k3s server
+  ansible.builtin.import_tasks: install.yml
+
+- name: Read k3s node token
+  ansible.builtin.import_tasks: token.yml
+
+- name: Verify k3s server
+  ansible.builtin.import_tasks: verify.yml

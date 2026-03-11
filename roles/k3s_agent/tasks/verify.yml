@@ -1,0 +1,12 @@
+---
+- name: Check k3s-agent service status
+  ansible.builtin.command: systemctl is-active k3s-agent
+  register: k3s_agent_status
+  changed_when: false
+  failed_when: k3s_agent_status.stdout.strip() != "active"
+  when: not ansible_check_mode
+
+- name: Display k3s-agent status
+  ansible.builtin.debug:
+    msg: "k3s-agent is {{ k3s_agent_status.stdout.strip() }} on {{ inventory_hostname }}"
+  when: not ansible_check_mode

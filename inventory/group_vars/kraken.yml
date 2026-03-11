@@ -1,12 +1,27 @@
-ufw_allowed_ports:
-  - { port: "22", proto: "tcp" }
-  - { port: "80", proto: "tcp" }
-  - { port: "2377", proto: "tcp" }
-  - { port: "6443", proto: "tcp" }
-  - { port: "7946", proto: "tcp" }
-  - { port: "7946", proto: "udp" }
-  - { port: "4789", proto: "udp" }
-  - { port: "8472", proto: "udp" }
-  - { port: "9001", proto: "tcp" }
-  - { port: "9443", proto: "tcp" }
-  - { port: "10250", proto: "tcp" }
+---
+kraken_cluster_name: kraken-lab
+
+kraken_master_ip: "192.168.0.200"
+kraken_api_server_url: "https://192.168.0.200:6443"
+
+k3s_version: "v1.34.5+k3s1"
+k3s_write_kubeconfig_mode: "0644"
+k3s_cluster_cidr: "10.42.0.0/16"
+k3s_service_cidr: "10.43.0.0/16"
+k3s_flannel_backend: "vxlan"
+k3s_disable_traefik: false
+
+ufw_enabled: true
+
+ufw_allowed_tcp_ports:
+  - 22
+  - 80
+  - 6443
+  - 10250
+
+ufw_allowed_udp_ports:
+  - 8472
+
+ufw_allowed_networks:
+  - "10.42.0.0/16"
+  - "10.43.0.0/16"

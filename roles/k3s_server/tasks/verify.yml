@@ -1,0 +1,21 @@
+---
+- name: Wait for k3s API to become ready
+  ansible.builtin.shell: |
+    kubectl get nodes
+  register: k3s_server_nodes_check
+  retries: 20
+  delay: 6
+  until: k3s_server_nodes_check.rc == 0
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Show k3s nodes after server install
+  ansible.builtin.command: kubectl get nodes -o wide
+  register: k3s_server_nodes_output
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Display k3s nodes output
+  ansible.builtin.debug:
+    var: k3s_server_nodes_output.stdout_lines
+  when: not ansible_check_mode

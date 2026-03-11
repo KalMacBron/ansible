@@ -1,13 +1,11 @@
 ---
 timezone: Europe/London
-kraken_admin_user: karl
 
-base_packages:
+common_packages:
   - curl
-  - vim
-  - git
-  - htop
+  - jq
   - ca-certificates
-  - gnupg
-  - lsb-release
   - apt-transport-https
+  - gnupg
+  - software-properties-common
+  - nfs-common

@@ -1,0 +1,45 @@
+---
+- name: Check whether k3s binary already exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Ensure k3s config directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write k3s server config
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      write-kubeconfig-mode: "{{ k3s_write_kubeconfig_mode }}"
+      node-name: "{{ k3s_server_node_name }}"
+      cluster-cidr: "{{ k3s_cluster_cidr }}"
+      service-cidr: "{{ k3s_service_cidr }}"
+      flannel-backend: "{{ k3s_flannel_backend }}"
+      {% if k3s_disable_traefik %}
+      disable:
+        - traefik
+      {% endif %}
+  notify: Restart k3s
+
+- name: Install k3s server
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -
+  args:
+    creates: /usr/local/bin/k3s
+  when: not k3s_binary.stat.exists
+
+- name: Ensure k3s service is enabled and started
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+    daemon_reload: true

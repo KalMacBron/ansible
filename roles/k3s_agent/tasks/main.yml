@@ -1,0 +1,6 @@
+---
+- name: Install k3s agent
+  ansible.builtin.import_tasks: install.yml
+
+- name: Verify k3s agent
+  ansible.builtin.import_tasks: verify.yml

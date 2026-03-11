@@ -1,0 +1,30 @@
+---
+- name: Apply Kraken common baseline
+  hosts: kraken
+  become: true
+  tasks:
+    - name: Run common role
+      ansible.builtin.import_role:
+        name: common
+      tags:
+        - common
+
+- name: Install and configure k3s server
+  hosts: kraken_server
+  become: true
+  tasks:
+    - name: Run k3s server role
+      ansible.builtin.import_role:
+        name: k3s_server
+      tags:
+        - server
+
+- name: Install and configure k3s agents
+  hosts: kraken_agents
+  become: true
+  tasks:
+    - name: Run k3s agent role
+      ansible.builtin.import_role:
+        name: k3s_agent
+      tags:
+        - agents

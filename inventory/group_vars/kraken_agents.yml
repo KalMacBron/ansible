@@ -1,0 +1,2 @@
+---
+k3s_agent_node_name: "{{ inventory_hostname }}"

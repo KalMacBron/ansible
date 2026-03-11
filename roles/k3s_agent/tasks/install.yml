@@ -1,0 +1,50 @@
+---
+- name: Check whether k3s agent binary already exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_agent_binary
+
+- name: Ensure k3s config directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Read k3s node token from server
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  delegate_to: "{{ groups['kraken_server'][0] }}"
+  register: delegated_k3s_token
+  run_once: true
+
+- name: Set shared k3s token fact for agent installs
+  ansible.builtin.set_fact:
+    k3s_join_token: "{{ delegated_k3s_token.content | b64decode | trim }}"
+
+- name: Write k3s agent config
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      server: "{{ kraken_api_server_url }}"
+      token: "{{ k3s_join_token }}"
+      node-name: "{{ inventory_hostname }}"
+  notify: Restart k3s-agent
+
+- name: Install k3s agent
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" K3S_URL="{{ kraken_api_server_url }}" K3S_TOKEN="{{ k3s_join_token }}" sh -s - agent
+  args:
+    creates: /usr/local/bin/k3s
+  when: not k3s_agent_binary.stat.exists
+
+- name: Ensure k3s-agent service is enabled and started
+  ansible.builtin.systemd:
+    name: k3s-agent
+    enabled: true
+    state: started
+    daemon_reload: true
