@@ -1,12 +1,39 @@
 ---
-- name: Check k3s-agent service status
+- name: Check k3s-agent service is active
   ansible.builtin.command: systemctl is-active k3s-agent
   register: k3s_agent_status
   changed_when: false
-  failed_when: k3s_agent_status.stdout.strip() != "active"
-  when: not ansible_check_mode
+  failed_when: k3s_agent_status.stdout | trim != "active"
 
 - name: Display k3s-agent status
   ansible.builtin.debug:
-    msg: "k3s-agent is {{ k3s_agent_status.stdout.strip() }} on {{ inventory_hostname }}"
-  when: not ansible_check_mode
+    msg: "k3s-agent is {{ k3s_agent_status.stdout | trim }} on {{ inventory_hostname }}"
+
+- name: Check k3s agent environment file exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s-agent.service.env
+  register: k3s_agent_env_file
+
+- name: Assert k3s agent environment file exists
+  ansible.builtin.assert:
+    that:
+      - k3s_agent_env_file.stat.exists
+    fail_msg: "k3s agent environment file is missing on {{ inventory_hostname }}"
+    success_msg: "k3s agent environment file exists on {{ inventory_hostname }}"
+
+- name: Check node is registered in cluster
+  ansible.builtin.command: kubectl get node {{ inventory_hostname | lower }} -o wide
+  delegate_to: "{{ groups['kraken_server'][0] }}"
+  register: k3s_agent_node_registration
+  changed_when: false
+
+- name: Show worker node registration
+  ansible.builtin.debug:
+    var: k3s_agent_node_registration.stdout_lines
+
+- name: Assert worker node is Ready
+  ansible.builtin.assert:
+    that:
+      - k3s_agent_node_registration.stdout is search((inventory_hostname | lower) ~ '\\s+Ready')
+    fail_msg: "Worker node {{ inventory_hostname }} is not Ready in the cluster"
+    success_msg: "Worker node {{ inventory_hostname }} is Ready in the cluster"

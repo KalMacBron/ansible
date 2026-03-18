@@ -1,21 +1,80 @@
 ---
-- name: Wait for k3s API to become ready
-  ansible.builtin.shell: |
-    kubectl get nodes
-  register: k3s_server_nodes_check
-  retries: 20
-  delay: 6
-  until: k3s_server_nodes_check.rc == 0
+- name: Check k3s service is active
+  ansible.builtin.command: systemctl is-active k3s
+  register: k3s_server_service_status
   changed_when: false
-  when: not ansible_check_mode
+  failed_when: k3s_server_service_status.stdout | trim != "active"
 
-- name: Show k3s nodes after server install
+- name: Show k3s service status
+  ansible.builtin.debug:
+    msg: "k3s service is {{ k3s_server_service_status.stdout | trim }} on {{ inventory_hostname }}"
+
+- name: Check k3s service environment file exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s.service.env
+  register: k3s_server_env_file
+
+- name: Show k3s server environment file presence
+  ansible.builtin.debug:
+    msg: >-
+      k3s server environment file exists on {{ inventory_hostname }}:
+      {{ k3s_server_env_file.stat.exists | default(false) }}
+
+- name: Check k3s node token exists
+  ansible.builtin.stat:
+    path: /var/lib/rancher/k3s/server/node-token
+  register: k3s_server_token_file
+
+- name: Assert k3s node token exists
+  ansible.builtin.assert:
+    that:
+      - k3s_server_token_file.stat.exists
+    fail_msg: "k3s node token file is missing on {{ inventory_hostname }}"
+    success_msg: "k3s node token file exists on {{ inventory_hostname }}"
+
+- name: Get cluster nodes in wide format
   ansible.builtin.command: kubectl get nodes -o wide
   register: k3s_server_nodes_output
   changed_when: false
-  when: not ansible_check_mode
 
-- name: Display k3s nodes output
+- name: Show cluster nodes
   ansible.builtin.debug:
     var: k3s_server_nodes_output.stdout_lines
-  when: not ansible_check_mode
+
+- name: Get cluster node names only
+  ansible.builtin.command: kubectl get nodes -o name
+  register: k3s_server_node_names
+  changed_when: false
+
+- name: Show cluster node names
+  ansible.builtin.debug:
+    var: k3s_server_node_names.stdout_lines
+
+- name: Assert all Kraken nodes are present
+  ansible.builtin.assert:
+    that:
+      - "'node/krakenmasternode' in k3s_server_node_names.stdout_lines"
+      - "'node/krakenworker1' in k3s_server_node_names.stdout_lines"
+      - "'node/krakenworker2' in k3s_server_node_names.stdout_lines"
+      - "'node/krakenworker3' in k3s_server_node_names.stdout_lines"
+    fail_msg: "One or more Kraken Lab nodes are missing from the cluster"
+    success_msg: "All Kraken Lab nodes are present in the cluster"
+
+- name: Assert all nodes are Ready
+  ansible.builtin.assert:
+    that:
+      - k3s_server_nodes_output.stdout is search('krakenmasternode\\s+Ready')
+      - k3s_server_nodes_output.stdout is search('krakenworker1\\s+Ready')
+      - k3s_server_nodes_output.stdout is search('krakenworker2\\s+Ready')
+      - k3s_server_nodes_output.stdout is search('krakenworker3\\s+Ready')
+    fail_msg: "One or more Kraken Lab nodes are not Ready"
+    success_msg: "All Kraken Lab nodes are Ready"
+
+- name: Get all pods across all namespaces
+  ansible.builtin.command: kubectl get pods -A -o wide
+  register: k3s_server_pods_output
+  changed_when: false
+
+- name: Show all cluster pods
+  ansible.builtin.debug:
+    var: k3s_server_pods_output.stdout_lines
